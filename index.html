@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="style.css">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Stock Visualizer</h1>
+      <form role="form">
+        <div class="form-group">
+          <input class="form-control" id="ticker" type="text"></input>
+          <input type="submit" id="submit" class="btn btn-default" value="Go">
+        </div>
+      </form>
+    </div>
+    <div class="container">
+      <svg class="chart"></svg>
+    </div>
+    <script src="bower_components/d3/d3.js" charset="utf-8"></script>
+    <script src="bower_components/jquery/dist/jquery.js" charset="utf-8"></script>
+    <script src="stock.js"></script>
+  </body>
+</html>
