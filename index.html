@@ -10,13 +10,15 @@
   </head>
   <body>
     <div class="container">
-      <h1>Stock Visualizer</h1>
+      <h1 class="centered">Stock Visualizer</h1>
+      <hr>
       <form role="form">
-        <div class="form-group">
-          <input class="form-control" id="ticker" type="text"></input>
+        <div class="form-inline centered">
+          <input class="form-control" id="ticker" placeholder="AAPL" type="text"></input>
           <input type="submit" id="submit" class="btn btn-default" value="Go">
         </div>
       </form>
+      <hr>
     </div>
     <div class="container">
       <svg class="chart"></svg>
