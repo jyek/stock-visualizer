@@ -6,12 +6,33 @@ body {
   text-align: center;
 }
 
-.chart rect {
+.bar {
   fill: steelblue;
+}
+
+.bar:hover {
+  fill: brown;
 }
 
 .chart text {
   fill: white;
   font: 10px sans-serif;
   text-anchor: middle;
+}
+
+.chart .title {
+  font-size: 20px !important;
+  fill: black !important;
+}
+
+.axis text {
+  font: 10px sans-serif;
+  fill: black !important;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
 }

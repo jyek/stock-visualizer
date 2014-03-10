@@ -43,34 +43,94 @@ var getDataForTicker = function(ticker){
   var todayStr = today.getFullYear + '-' + today.getMonth() + '-' + today.getDate();
   getStock({ stock: ticker, startDate: '2014-01-01', endDate: todayStr }, 'historicaldata', function(err, data) {
     var ticks = data.quote;
-    plotColumnGraph(ticks);
+    plotColumnGraph(ticks, ticker);
   });
 };
 
 // http://bost.ocks.org/mike/bar/3/
-var plotColumnGraph = function(data){
-  var width = 960,
-      height = 400;
+var plotColumnGraph = function(data, ticker){
+  var margin = {top: 20, right: 30, bottom: 50, left: 40},
+      width = 960 - margin.left - margin.right,
+      height = 500 - margin.top - margin.bottom,
+      padding = 20;
+      yPadding = 50;
 
-  console.log(data);
+  console.log(data, ticker);
 
-  var y = d3.scale.linear().domain([1000,1300]).range([0, height]);
+  var format = d3.format('0,000');
+  var min = d3.min(data,function(d){return d.Close;}) - yPadding;
+  var max = d3.max(data,function(d){return d.Close;}) + yPadding;
 
+  var x = d3.scale.ordinal().rangeRoundBands([0, width], 0.1);
+  var y = d3.scale.linear().domain([max, min]).range([height, 0]);
+
+  // chart
   var chart = d3.select('.chart')
-    .attr('width', width)
-    .attr('height', height);
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
+    .append('g')
+    .attr('class','body')
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+  // title
+  var title = d3.select('.chart').selectAll('g .title')
+    .data([ticker]);
+
+  title.enter().append('g')
+    .attr('class', 'title');
+
+  title.append('text')
+    .attr('class', 'title')
+    .attr('x', width/2)
+    .attr('y', padding)
+    .attr('fill', 'red')
+    .text(ticker);
+
+  // axis stamps
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient('bottom');
+
+  var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(5);
+
+  // bars
   var barWidth = width / data.length;
 
   var bar = chart.selectAll('g')
     .data(data)
     .enter().append('g')
-    .attr('transform', function(d, i){ return "translate(" + i * barWidth + ",0)"; });
+    .attr('transform', function(d, i){ return "translate(" + (width - (i + 1) * barWidth) + ",0)"; });
 
   bar.append('rect')
+    .attr('class', 'bar')
     .attr('y', function(d){ return height - y(d.Close); })
     .attr('height', function(d){ return y(d.Close); })
     .attr('width', barWidth - 1);
+
+  bar.append('text')
+    .attr('x', barWidth / 2)
+    .attr('y', function(d) { return height - y(d.Close) + 3; })
+    .attr('dy', '.75em')
+    .text(function(d) { return format(d3.round(d.Close, 0)); });
+
+  // make axis
+  chart.append('g')
+    .attr('class', 'x axis')
+    .attr('transform', 'translate(0,' + height + ')')
+    .call(xAxis);
+
+  chart.append("g")
+    .attr("class", "y axis")
+    .call(yAxis)
+    .append('text')
+    .attr("transform", "rotate(-90)")
+    .attr("y", 6)
+    .attr("dy", ".71em")
+    .style("text-anchor", "end")
+    .text("Price");
 };
 
 $(document).ready(function(){
