@@ -16,7 +16,7 @@ body {
 
 .stock-price-chart text {
   fill: white;
-  font: 10px sans-serif;
+  font-size: 10px;
   text-anchor: middle;
 }
 
@@ -26,7 +26,7 @@ body {
 }
 
 .axis text {
-  font: 10px sans-serif;
+  font-size: 10px;
   fill: black !important;
 }
 
@@ -35,10 +35,6 @@ body {
   fill: none;
   stroke: #000;
   shape-rendering: crispEdges;
-}
-
-body {
-  font: 10px sans-serif;
 }
 
 .line {
