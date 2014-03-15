@@ -38,31 +38,12 @@
   window.getStock = getStock;
 })(jQuery);
 
-var getDataForTicker = function(ticker){
-  var today = new Date();
-  var todayStr = today.getFullYear + '-' + today.getMonth() + '-' + today.getDate();
-  getStock({ stock: ticker, startDate: '2014-01-01', endDate: todayStr }, 'historicaldata', function(err, data) {
-    var ticks = data.quote;
-    plotColumnGraph(ticks, ticker);
-  });
-};
-
-// http://bost.ocks.org/mike/bar/3/
-var plotColumnGraph = function(data, ticker){
+$(document).ready(function(){
+  // prepare chart
   var margin = {top: 20, right: 30, bottom: 50, left: 40},
       width = 960 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom,
       padding = 20;
-      yPadding = 50;
-
-  console.log(data, ticker);
-
-  var format = d3.format('0,000');
-  var min = d3.min(data,function(d){return d.Close;}) - yPadding;
-  var max = d3.max(data,function(d){return d.Close;}) + yPadding;
-
-  var x = d3.scale.ordinal().rangeRoundBands([0, width], 0.1);
-  var y = d3.scale.linear().domain([max, min]).range([height, 0]);
 
   // chart
   var chart = d3.select('.chart')
@@ -72,68 +53,110 @@ var plotColumnGraph = function(data, ticker){
     .attr('class','body')
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  // title
-  var title = d3.select('.chart').selectAll('g .title')
-    .data([ticker]);
+  // http://bost.ocks.org/mike/bar/3/
+  var updateColumnGraph = function(data, ticker){
+    // params
+    var barWidth = width / data.length;
+    var format = d3.format('0,000');
+    var minDate = d3.min(data,function(d){return new Date(d.Date);});
+    var maxDate = d3.max(data,function(d){return new Date(d.Date);});
+    var min = d3.min(data,function(d){return +d.Close;});
+    var max = d3.max(data,function(d){return +d.Close;});
 
-  title.enter().append('g')
-    .attr('class', 'title');
+    var x = d3.time.scale().domain([minDate, maxDate]).range([0, width]);
+    var y = d3.scale.linear().domain([min, max]).range([height, 0]);
 
-  title.append('text')
-    .attr('class', 'title')
-    .attr('x', width/2)
-    .attr('y', padding)
-    .attr('fill', 'red')
-    .text(ticker);
+    // axis stamps
+    var xAxis = d3.svg.axis()
+      .scale(x)
+      .orient('bottom')
+      .tickFormat(d3.time.format("%b %Y"))
+      .tickSize(0,0)
+      .tickPadding(10);
 
-  // axis stamps
-  var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient('bottom');
+    var yAxis = d3.svg.axis()
+      .scale(y)
+      .orient("left")
+      .ticks(5)
+      .tickSize(0,0)
+      .tickPadding(8);
 
-  var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left")
-    .ticks(5);
+    // title: data
+    var title = d3.select('.chart').selectAll('g .title')
+      .data([ticker]);
 
-  // bars
-  var barWidth = width / data.length;
+    // title: enter
+    var titleEnter = title.enter().append('g')
+      .attr('class', 'title')
+      .append('text');
 
-  var bar = chart.selectAll('g')
-    .data(data)
-    .enter().append('g')
-    .attr('transform', function(d, i){ return "translate(" + (width - (i + 1) * barWidth) + ",0)"; });
+    // title: update
+    title.selectAll('text')
+      .attr('class', 'title')
+      .attr('x', width/2)
+      .attr('y', padding)
+      .text(function(d){ return d; });
 
-  bar.append('rect')
-    .attr('class', 'bar')
-    .attr('y', function(d){ return height - y(d.Close); })
-    .attr('height', function(d){ return y(d.Close); })
-    .attr('width', barWidth - 1);
+    // bar: data
+    var bar = chart.selectAll('g')
+      .data(data);
 
-  bar.append('text')
-    .attr('x', barWidth / 2)
-    .attr('y', function(d) { return height - y(d.Close) + 3; })
-    .attr('dy', '.75em')
-    .text(function(d) { return format(d3.round(d.Close, 0)); });
+    // bar: enter
+    var barEnter = bar.enter().append('g')
+      .attr('transform', function(d, i){ return "translate(" + (width - (i + 1) * barWidth) + ",0)"; });
 
-  // make axis
-  chart.append('g')
-    .attr('class', 'x axis')
-    .attr('transform', 'translate(0,' + height + ')')
-    .call(xAxis);
+    barEnter.append('rect')
+      .attr('class', 'bar');
 
-  chart.append("g")
-    .attr("class", "y axis")
-    .call(yAxis)
-    .append('text')
-    .attr("transform", "rotate(-90)")
-    .attr("y", 6)
-    .attr("dy", ".71em")
-    .style("text-anchor", "end")
-    .text("Price");
-};
+    barEnter.append('text');
 
-$(document).ready(function(){
+    // bar: update
+    bar.selectAll('text')
+      .attr('x', barWidth / 2)
+      .attr('y', function(d) { console.log(d.Close); return y(d.Close) + 3; })
+      .attr('dy', '.75em')
+      .text(function(d) { return format(d3.round(d.Close, 0)); });
+
+    bar.selectAll('rect')
+      .transition()
+      .attr('width', barWidth - 1)
+      .duration(1000)
+      .attr('height', function(d){ return height - y(d.Close); })
+      .attr('y', function(d){ return y(d.Close); });
+
+    // bar: remove
+    bar.exit().remove();
+
+    // make axis
+    chart.append('g')
+      .attr('class', 'x axis')
+      .attr('transform', 'translate(0,' + height + ')')
+      .call(xAxis);
+
+    chart.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append('text')
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Price");
+  };
+
+  var getDataForTicker = function(ticker){
+    var today = new Date();
+    var todayStr = today.getFullYear + '-' + today.getMonth() + '-' + today.getDate();
+    getStock({ stock: ticker, startDate: '2014-01-01', endDate: todayStr }, 'historicaldata', function(err, data) {
+      var ticks = data.quote;
+      updateColumnGraph(ticks, ticker);
+    });
+  };
+
+  /*********************
+  CORE
+  *********************/
+
   // initial ticker
   var ticker = 'GOOG';
 
