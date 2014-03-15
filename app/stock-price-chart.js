@@ -37,6 +37,25 @@ $(document).ready(function(){
     .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+  // chart - init x-axis
+  svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .attr("class", "x axis");
+
+  // chart - init y-axis
+  svg.append("g")
+      .attr("class", "y axis")
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Price ($)");
+
+  // chart - init line
+  svg.append("path")
+    .attr("class", "line");
+
   // draw
   var draw = function(ticker, data){
     // process date and closing price
@@ -46,35 +65,22 @@ $(document).ready(function(){
       console.log(d.close,d.Close,d.date,d.Date);
     });
 
-    // set bounds of chart
+    // update bounds of chart
     x.domain(d3.extent(data, function(d) { return d.date; }));
     y.domain(d3.extent(data, function(d) { return d.close; }));
 
-    // create x-axis
-    svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
+    // update x and y axis
+    svg.selectAll("g.x.axis")
       .call(xAxis);
 
-    // create y-axis
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-      .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", ".71em")
-        .style("text-anchor", "end")
-        .text("Price ($)");
+    svg.selectAll("g.y.axis")
+      .call(yAxis);
 
-    // create line
-    svg.append("path")
+    // update line
+    svg.selectAll("path.line")
       .datum(data)
-      .attr("class", "line")
       .attr("d", line);
   };
-
-  var init = false;
 
   var getDataForTicker = function(ticker){
     var today = new Date();
