@@ -5,158 +5,74 @@ $(document).ready(function(){
       height = 500 - margin.top - margin.bottom,
       padding = 20;
 
+  // date parsing
+  var parseDate = d3.time.format("%Y-%m-%d").parse;
+
+  // scale x axis
+  var x = d3.time.scale()
+    .range([0, width]);
+
+  // scale y axis
+  var y = d3.scale.linear()
+    .range([height, 0]);
+
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickFormat(d3.time.format("%d %b %Y"));
+
+  var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+  // line
+  var line = d3.svg.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.close); });
+
   // chart
-  var chart = d3.select('.stock-price-chart')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom)
-    .append('g')
-    .attr('class','body')
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  var svg = d3.select(".stock-price-chart")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  // http://bost.ocks.org/mike/bar/3/
+  // draw
   var draw = function(ticker, data){
-    // params
-    var barWidth = width / data.length;
-    var format = d3.format('0,000');
-    var minDate = d3.min(data,function(d){return new Date(d.Date);});
-    var maxDate = d3.max(data,function(d){return new Date(d.Date);});
-    var min = d3.min(data,function(d){return +d.Close;});
-    var max = d3.max(data,function(d){return +d.Close;});
+    // process date and closing price
+    data.forEach(function(d) {
+      d.date = parseDate(d.Date);
+      d.close = +d.Close;
+      console.log(d.close,d.Close,d.date,d.Date);
+    });
 
-    var x = d3.time.scale().domain([minDate, maxDate]).range([0, width]);
-    var y = d3.scale.linear().domain([min, max]).range([height, 0]);
+    // set bounds of chart
+    x.domain(d3.extent(data, function(d) { return d.date; }));
+    y.domain(d3.extent(data, function(d) { return d.close; }));
 
-    // axis stamps
-    var xAxis = d3.svg.axis()
-      .scale(x)
-      .orient('bottom')
-      .tickFormat(d3.time.format("%b %Y"))
-      .tickSize(0,0)
-      .tickPadding(10);
-
-    var yAxis = d3.svg.axis()
-      .scale(y)
-      .orient("left")
-      .ticks(5)
-      .tickSize(0,0)
-      .tickPadding(8);
-
-    // title: data
-    var title = d3.select('.stock-price-chart').selectAll('g .title')
-      .data([ticker]);
-
-    // title: enter
-    var titleEnter = title.enter().append('g')
-      .attr('class', 'title')
-      .append('text');
-
-    // title: update
-    title.selectAll('text')
-      .attr('class', 'title')
-      .attr('x', width/2)
-      .attr('y', padding)
-      .text(function(d){ return d; });
-
-    // bar: data
-    var bar = chart.selectAll('g')
-      .data(data);
-
-    // bar: enter
-    var barEnter = bar.enter().append('g')
-      .attr('transform', function(d, i){ return "translate(" + (width - (i + 1) * barWidth) + ",0)"; });
-
-    barEnter.append('rect')
-      .attr('class', 'bar');
-
-    barEnter.append('text');
-
-    // bar: update
-    bar.selectAll('text')
-      .attr('x', barWidth / 2)
-      .attr('y', function(d) { return y(d.Close) + 3; })
-      .attr('dy', '.75em')
-      .text(function(d) { return format(d3.round(d.Close, 0)); });
-
-    bar.selectAll('rect')
-      .transition()
-      .attr('width', barWidth - 1)
-      .duration(1000)
-      .attr('height', function(d){ return height - y(d.Close); })
-      .attr('y', function(d){ return y(d.Close); });
-
-    // bar: remove
-    bar.exit().remove();
-
-    // make axis
-    chart.append('g')
-      .attr('class', 'x axis')
-      .attr('transform', 'translate(0,' + height + ')')
+    // create x-axis
+    svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
 
-    chart.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-      .append('text')
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("Price");
+    // create y-axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+      .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Price ($)");
+
+    // create line
+    svg.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
   };
-
-  function redraw(ticker, data) {
-    var barWidth = width / data.length;
-    var format = d3.format('0,000');
-    var minDate = d3.min(data,function(d){return new Date(d.Date);});
-    var maxDate = d3.max(data,function(d){return new Date(d.Date);});
-    var min = d3.min(data,function(d){return +d.Close;});
-    var max = d3.max(data,function(d){return +d.Close;});
-
-    var x = d3.time.scale().domain([minDate, maxDate]).range([0, width]);
-    var y = d3.scale.linear().domain([min, max]).range([height, 0]);
-
-    console.log('hey', data, ticker);
-
-    var title = chart.selectAll('text.title')
-      .data([ticker])
-      .attr('class', 'title')
-      .attr('x', width/2)
-      .attr('y', padding)
-      .text(function(d){ return d; });
-
-    chart.selectAll("rect")
-        .data(data)
-      .transition()
-        .duration(1000)
-        .attr("y", function(d) { return height - y(d.Close); })
-        .attr("height", function(d) { return y(d.Close); });
-
-    // chart: update text
-    chart.selectAll('text')
-        .data(data)
-      .transition()
-        .duration(1000)
-        .attr('x', barWidth / 2)
-        .attr('y', function(d) { return y(d.Close) + 3; })
-        .attr('dy', '.75em')
-        .text(function(d) { return format(d3.round(d.Close, 0)); });
-
-    // make axis
-    chart.append('g')
-      .attr('class', 'x axis')
-      .attr('transform', 'translate(0,' + height + ')')
-      .call(xAxis);
-
-    chart.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-      .append('text')
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("Price");
-  }
 
   var init = false;
 
@@ -165,12 +81,7 @@ $(document).ready(function(){
     var todayStr = today.getFullYear + '-' + today.getMonth() + '-' + today.getDate();
     getStock({ stock: ticker, startDate: '2014-01-01', endDate: todayStr }, 'historicaldata', function(err, data) {
       var ticks = data.quote;
-      if (!init){
-        draw(ticker, ticks);
-        init = true;
-      } else {
-        redraw(ticker, ticks);
-      }
+      draw(ticker, ticks);
     });
   };
 
