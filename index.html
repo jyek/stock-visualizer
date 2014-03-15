@@ -16,13 +16,15 @@
       <form role="form">
         <div class="form-inline centered">
           <input class="form-control" id="ticker" placeholder="AAPL" type="text"></input>
-          <input type="submit" id="submit" class="btn btn-default" value="Go">
+          <button id="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
         </div>
       </form>
       <hr>
     </div>
+    <div class="container metric-view">
+    </div>
     <div class="container">
-      <svg class="stock-price-chart"></svg>
+      <svg class="stock-chart-view"></svg>
     </div>
     <script src="bower_components/underscore/underscore.js" charset="utf-8"></script>
     <script src="bower_components/jquery/dist/jquery.js" charset="utf-8"></script>
@@ -32,6 +34,7 @@
     <!-- <script src="app/stock-price-chart.js"></script> -->
     <script src="app/models/Stock.js"></script>
     <script src="app/views/StockChartView.js"></script>
+    <script src="app/views/MetricView.js"></script>
     <script src="app/views/QueryView.js"></script>
     <script src="app/views/AppView.js"></script>
 
