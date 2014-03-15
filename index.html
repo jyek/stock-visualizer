@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles/styles.css">
     <link href="http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,700" rel="stylesheet" type="text/css">
   </head>
   <body>
@@ -21,10 +21,12 @@
       <hr>
     </div>
     <div class="container">
-      <svg class="chart"></svg>
+      <svg class="stock-price-chart"></svg>
+      <svg class="bar-chart"></svg>
     </div>
     <script src="bower_components/d3/d3.js" charset="utf-8"></script>
     <script src="bower_components/jquery/dist/jquery.js" charset="utf-8"></script>
-    <script src="stock.js"></script>
+    <script src="app/yql.js"></script>
+    <script src="app/stock-price-chart.js"></script>
   </body>
 </html>

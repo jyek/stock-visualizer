@@ -6,7 +6,7 @@ var barHeight = 20;
 var x = d3.scale.linear()
   .range([0, width]);
 
-var chart = d3.select('.bar-chart')
+var chart = d3.select('.chart1')
   .attr('width', width);
 
 var type = function(d) {

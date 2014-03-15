@@ -14,13 +14,13 @@ body {
   fill: brown;
 }
 
-.chart text {
+.stock-price-chart text {
   fill: white;
   font: 10px sans-serif;
   text-anchor: middle;
 }
 
-.chart .title {
+.stock-price-chart .title {
   font-size: 20px !important;
   fill: black !important;
 }

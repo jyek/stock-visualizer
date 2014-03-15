@@ -1,43 +1,3 @@
-(function($) {
-  function getStock(opts, type, complete) {
-    var defs = {
-      desc: false,
-      baseURL: 'http://query.yahooapis.com/v1/public/yql?q=',
-      query: {
-        quotes: 'select * from yahoo.finance.quotes where symbol = "{stock}" | sort(field="{sortBy}", descending="{desc}")',
-        historicaldata: 'select * from yahoo.finance.historicaldata where symbol = "{stock}" and startDate = "{startDate}" and endDate = "{endDate}"'
-      },
-      suffixURL: {
-        quotes: '&env=store://datatables.org/alltableswithkeys&format=json&callback=?',
-        historicaldata: '&env=store://datatables.org/alltableswithkeys&format=json&callback=?'
-      }
-    };
-
-    opts = opts || {};
-
-    if (!opts.stock) {
-        complete('No stock defined');
-        return;
-    }
-
-    var query = defs.query[type]
-    .replace('{stock}', opts.stock)
-    .replace('{sortBy}', defs.sortBy)
-    .replace('{desc}', defs.desc)
-    .replace('{startDate}', opts.startDate)
-    .replace('{endDate}', opts.endDate);
-
-    var url = defs.baseURL + query + (defs.suffixURL[type] || '');
-    $.getJSON(url, function(data) {
-      var err = null;
-      if (!data || !data.query) {
-        err = true;
-      }
-      complete(err, !err && data.query.results);    });
-  }
-  window.getStock = getStock;
-})(jQuery);
-
 $(document).ready(function(){
   // prepare chart
   var margin = {top: 20, right: 30, bottom: 50, left: 40},
@@ -46,7 +6,7 @@ $(document).ready(function(){
       padding = 20;
 
   // chart
-  var chart = d3.select('.chart')
+  var chart = d3.select('.stock-price-chart')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
     .append('g')
@@ -54,7 +14,7 @@ $(document).ready(function(){
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   // http://bost.ocks.org/mike/bar/3/
-  var updateColumnGraph = function(data, ticker){
+  var draw = function(ticker, data){
     // params
     var barWidth = width / data.length;
     var format = d3.format('0,000');
@@ -82,7 +42,7 @@ $(document).ready(function(){
       .tickPadding(8);
 
     // title: data
-    var title = d3.select('.chart').selectAll('g .title')
+    var title = d3.select('.stock-price-chart').selectAll('g .title')
       .data([ticker]);
 
     // title: enter
@@ -113,7 +73,7 @@ $(document).ready(function(){
     // bar: update
     bar.selectAll('text')
       .attr('x', barWidth / 2)
-      .attr('y', function(d) { console.log(d.Close); return y(d.Close) + 3; })
+      .attr('y', function(d) { return y(d.Close) + 3; })
       .attr('dy', '.75em')
       .text(function(d) { return format(d3.round(d.Close, 0)); });
 
@@ -144,12 +104,73 @@ $(document).ready(function(){
       .text("Price");
   };
 
+  function redraw(ticker, data) {
+    var barWidth = width / data.length;
+    var format = d3.format('0,000');
+    var minDate = d3.min(data,function(d){return new Date(d.Date);});
+    var maxDate = d3.max(data,function(d){return new Date(d.Date);});
+    var min = d3.min(data,function(d){return +d.Close;});
+    var max = d3.max(data,function(d){return +d.Close;});
+
+    var x = d3.time.scale().domain([minDate, maxDate]).range([0, width]);
+    var y = d3.scale.linear().domain([min, max]).range([height, 0]);
+
+    console.log('hey', data, ticker);
+
+    var title = chart.selectAll('text.title')
+      .data([ticker])
+      .attr('class', 'title')
+      .attr('x', width/2)
+      .attr('y', padding)
+      .text(function(d){ return d; });
+
+    chart.selectAll("rect")
+        .data(data)
+      .transition()
+        .duration(1000)
+        .attr("y", function(d) { return height - y(d.Close); })
+        .attr("height", function(d) { return y(d.Close); });
+
+    // chart: update text
+    chart.selectAll('text')
+        .data(data)
+      .transition()
+        .duration(1000)
+        .attr('x', barWidth / 2)
+        .attr('y', function(d) { return y(d.Close) + 3; })
+        .attr('dy', '.75em')
+        .text(function(d) { return format(d3.round(d.Close, 0)); });
+
+    // make axis
+    chart.append('g')
+      .attr('class', 'x axis')
+      .attr('transform', 'translate(0,' + height + ')')
+      .call(xAxis);
+
+    chart.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append('text')
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Price");
+  }
+
+  var init = false;
+
   var getDataForTicker = function(ticker){
     var today = new Date();
     var todayStr = today.getFullYear + '-' + today.getMonth() + '-' + today.getDate();
     getStock({ stock: ticker, startDate: '2014-01-01', endDate: todayStr }, 'historicaldata', function(err, data) {
       var ticks = data.quote;
-      updateColumnGraph(ticks, ticker);
+      if (!init){
+        draw(ticker, ticks);
+        init = true;
+      } else {
+        redraw(ticker, ticks);
+      }
     });
   };
 
